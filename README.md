@@ -6,3 +6,5 @@
 Project Contributors: Bryan Sanders, Andrew Burt, Joel Staggs, Edwin, Arturo Urbina
 
 Goal: A top-down battle royale style game similar to Player Unknown Battlegrounds and Fortnite based off a framework provided by Professor Gordon Griesel  
+
+[a link](https://github.com/aburt1/CSUB-Battle-Royal/blob/master/lab4.pdf)
