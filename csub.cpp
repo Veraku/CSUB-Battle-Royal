@@ -780,7 +780,7 @@ void render()
 		}
 		glEnd();
 	}
-	DrawCircle((float)gl.xres/2,(float)gl.yres/2,44.0,33);
+	//DrawCircle((float)gl.xres/2,(float)gl.yres/2,44.0,33);
 	//------------------
 	//Draw the asteroids
 	{
