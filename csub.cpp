@@ -65,6 +65,21 @@ class Ship {
 		Vec vel;
 		float angle;
 		float color[3];
+		
+		//Some basic player stats.
+                /*
+                 * HP might be best as a multiple of the width
+                 * in case we implement an HP bar.
+                 */
+                int playerHitpoints = 100;
+                int handgunAttack = 10;
+                int rifleAttack = 5;
+                int shotgunAttack = 5;
+                int machineGunAttack = 3;
+                bool hasRifle = 0;
+                bool hasShotgun = 0;
+                bool hasMachineGun = 0;
+
 	public:
 		Ship() {
 			VecZero(dir);
