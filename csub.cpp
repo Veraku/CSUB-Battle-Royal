@@ -39,7 +39,7 @@ const float TIMESLICE = 1.0f;
 const float GRAVITY = -0.2f;
 #define PI 3.141592653589793
 #define ALPHA 1
-const int MAX_BULLETS = 11;
+const int MAX_BULLETS = 30;
 const Flt MINIMUM_ASTEROID_SIZE = 60.0;
 //-----------------------------------------------------------------------------
 //Setup timers
@@ -79,6 +79,8 @@ class Ship {
                 bool hasRifle = 0;
                 bool hasShotgun = 0;
                 bool hasMachineGun = 0;
+		int playerBullets = 50;
+
 
 	public:
 		Ship() {
@@ -368,8 +370,12 @@ void check_mouse(XEvent *e)
 			if (ts > 0.1) {
 				timeCopy(&g.bulletTimer, &bt);
 				//shoot a bullet...
-				if (g.nbullets < MAX_BULLETS) {
-					Bullet *b = &g.barr[g.nbullets];
+				if (g.nbullets < MAX_BULLETS &&
+					g.ship.playerBullets>0) {
+							
+					//May want to change formatting.
+				    	--g.ship.playerBullets;
+				    	Bullet *b = &g.barr[g.nbullets];
 					timeCopy(&b->time, &bt);
 					b->pos[0] = g.ship.pos[0];
 					b->pos[1] = g.ship.pos[1];
@@ -695,10 +701,15 @@ void physics()
 		double ts = timeDiff(&g.bulletTimer, &bt);
 		if (ts > 0.1) {
 			timeCopy(&g.bulletTimer, &bt);
-			if (g.nbullets < MAX_BULLETS) {
-				//shoot a bullet...
+			if (g.nbullets < MAX_BULLETS &&
+				g.ship.playerBullets>0) {
+				
+				//Might Need Some formatting
+
+			    	//shoot a bullet...
 				//Bullet *b = new Bullet;
-				Bullet *b = &g.barr[g.nbullets];
+				--g.ship.playerBullets;
+			    	Bullet *b = &g.barr[g.nbullets];
 				timeCopy(&b->time, &bt);
 				b->pos[0] = g.ship.pos[0];
 				b->pos[1] = g.ship.pos[1];
@@ -754,6 +765,7 @@ void render()
 	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
 	ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
 	ggprint8b(&r, 16, 0x00ffff00, "n asteroids destroyed: ");
+	ggprint8b(&r, 16, 0x00ffff00, "n bullets remaining: %i", g.ship.playerBullets);
 	//
 	//-------------
 	//Draw the ship
