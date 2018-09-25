@@ -3,7 +3,12 @@
 
 #include <cstring>
 
-extern std::string joelName = "Joel Staggs";
+
+//Function required for lab 5
+extern char* joel_credits(){
+
+	return (char*)"Joel Staggs";
+}
 
 
 
