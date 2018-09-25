@@ -14,8 +14,8 @@ LFLAGS = -lrt -lX11 -lGL
 
 all: csub
 
-csub: csub.cpp log.cpp timers.cpp
-	g++ $(CFLAGS) csub.cpp log.cpp timers.cpp \
+csub: csub.cpp log.cpp timers.cpp arturoU.cpp edwinG.cpp andrewB.cpp joelS.cpp bryanS.cpp
+	g++ $(CFLAGS) csub.cpp log.cpp timers.cpp arturoU.cpp edwinG.cpp andrewB.cpp joelS.cpp bryanS.cpp \
 	libggfonts.a -Wall $(LFLAGS) -o csub
 
 clean:
