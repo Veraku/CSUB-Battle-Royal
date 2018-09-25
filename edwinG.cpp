@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include "fonts.h"
-void showName(int x, int y){
+void edwin_credits(int x, int y){
 	Rect r;
     	r.bot = y;
 	r.left = x;
