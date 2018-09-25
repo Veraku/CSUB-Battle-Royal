@@ -5,6 +5,7 @@
 //mod spring 2018: X11 wrapper class
 //This program is a game starting point for a 3350 project.
 //
+//
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -36,11 +37,11 @@ typedef Flt	Matrix[4][4];
 (c)[2]=(a)[2]-(b)[2]
 //constants
 const float TIMESLICE = 1.0f;
-const float GRAVITY = -0.2f;
+const float GRAVITY = -0.6f;
 #define PI 3.141592653589793
 #define ALPHA 1
-const int MAX_BULLETS = 30;
-const Flt MINIMUM_ASTEROID_SIZE = 60.0;
+const int MAX_BULLETS = 100;
+const Flt MINIMUM_ASTEROID_SIZE = 10.0;
 //-----------------------------------------------------------------------------
 //Setup timers
 const double OOBILLION = 1.0 / 1e9;
@@ -51,8 +52,10 @@ extern void timeCopy(struct timespec *dest, struct timespec *source);
 class Global {
 	public:
 		int xres, yres;
+		int credits;
 		char keys[65536];
 		Global() {
+			credits=0;
 			xres = 1250;
 			yres = 900;
 			memset(keys, 0, 65536);
@@ -65,23 +68,6 @@ class Ship {
 		Vec vel;
 		float angle;
 		float color[3];
-		
-		//Some basic player stats.
-                /*
-                 * HP might be best as a multiple of the width
-                 * in case we implement an HP bar.
-                 */
-                int playerHitpoints = 100;
-                int handgunAttack = 10;
-                int rifleAttack = 5;
-                int shotgunAttack = 5;
-                int machineGunAttack = 3;
-                bool hasRifle = 0;
-                bool hasShotgun = 0;
-                bool hasMachineGun = 0;
-		int playerBullets = 50;
-
-
 	public:
 		Ship() {
 			VecZero(dir);
@@ -142,6 +128,7 @@ class Game {
 				Asteroid *a = new Asteroid;
 				a->nverts = 8;
 				a->radius = rnd()*80.0 + 40.0;
+				//a->radius=10.0;
 				Flt r2 = a->radius / 2.0;
 				Flt angle = 0.0f;
 				Flt inc = (PI * 2.0) / (Flt)a->nverts;
@@ -370,12 +357,8 @@ void check_mouse(XEvent *e)
 			if (ts > 0.1) {
 				timeCopy(&g.bulletTimer, &bt);
 				//shoot a bullet...
-				if (g.nbullets < MAX_BULLETS &&
-					g.ship.playerBullets>0) {
-							
-					//May want to change formatting.
-				    	--g.ship.playerBullets;
-				    	Bullet *b = &g.barr[g.nbullets];
+				if (g.nbullets < MAX_BULLETS) {
+					Bullet *b = &g.barr[g.nbullets];
 					timeCopy(&b->time, &bt);
 					b->pos[0] = g.ship.pos[0];
 					b->pos[1] = g.ship.pos[1];
@@ -469,6 +452,9 @@ int check_keys(XEvent *e)
 		case XK_Escape:
 			return 1;
 		case XK_f:
+			break;
+		case XK_c:
+			gl.credits ^=1;
 			break;
 		case XK_s:
 			break;
@@ -701,15 +687,10 @@ void physics()
 		double ts = timeDiff(&g.bulletTimer, &bt);
 		if (ts > 0.1) {
 			timeCopy(&g.bulletTimer, &bt);
-			if (g.nbullets < MAX_BULLETS &&
-				g.ship.playerBullets>0) {
-				
-				//Might Need Some formatting
-
-			    	//shoot a bullet...
+			if (g.nbullets < MAX_BULLETS) {
+				//shoot a bullet...
 				//Bullet *b = new Bullet;
-				--g.ship.playerBullets;
-			    	Bullet *b = &g.barr[g.nbullets];
+				Bullet *b = &g.barr[g.nbullets];
 				timeCopy(&b->time, &bt);
 				b->pos[0] = g.ship.pos[0];
 				b->pos[1] = g.ship.pos[1];
@@ -752,104 +733,120 @@ void DrawCircle(float cx, float cy, float r, int num_segments)
 	} 
 	glEnd(); 
 }
+extern void art_credits();
 void render()
 {
 	x11.clear_screen();
+
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//
 	r.bot = gl.yres - 20;
 	r.left = 10;
 	r.center = 0;
-	ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
-	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
-	ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
-	ggprint8b(&r, 16, 0x00ffff00, "n asteroids destroyed: ");
-	ggprint8b(&r, 16, 0x00ffff00, "n bullets remaining: %i", g.ship.playerBullets);
-	//
-	//-------------
-	//Draw the ship
-	glColor3fv(g.ship.color);
-	glPushMatrix();
-	glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
-	glRotatef(g.ship.angle, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex2f(-12.0f, -10.0f);
-	glVertex2f(  0.0f, 20.0f);
-	glVertex2f(  0.0f, -6.0f);
-	glVertex2f(  0.0f, -6.0f);
-	glVertex2f(  0.0f, 20.0f);
-	glVertex2f( 12.0f, -10.0f);
-	glEnd();
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glBegin(GL_POINTS);
-	glVertex2f(0.0f, 0.0f);
-	glEnd();
-	glPopMatrix();
-	if (gl.keys[XK_Up] || g.mouseThrustOn) {
-		int i;
-		//draw thrust
-		Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-		//convert angle to a vector
-		Flt xdir = cos(rad);
-		Flt ydir = sin(rad);
-		Flt xs,ys,xe,ye,r;
-		glBegin(GL_LINES);
-		for (i=0; i<16; i++) {
-			xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
-			ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
-			r = rnd()*40.0+40.0;
-			xe = -xdir * r + rnd() * 18.0 - 9.0;
-			ye = -ydir * r + rnd() * 18.0 - 9.0;
-			glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
-			glVertex2f(g.ship.pos[0]+xs,g.ship.pos[1]+ys);
-			glVertex2f(g.ship.pos[0]+xe,g.ship.pos[1]+ye);
-		}
-		glEnd();
-	}
-	//DrawCircle((float)gl.xres/2,(float)gl.yres/2,44.0,33);
-	//------------------
-	//Draw the asteroids
-	{
-		Asteroid *a = g.ahead;
-		while (a) {
-			//Log("draw asteroid...\n");
-			glColor3fv(a->color);
-			glPushMatrix();
-			glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
-			glBegin(GL_LINE_LOOP);
-			//Log("%i verts\n",a->nverts);
-			for (int j=0; j<a->nverts; j++) {
-				glVertex2f(a->vert[j][0], a->vert[j][1]);
-			}
-			glEnd();
-			glPopMatrix();
-			glColor3f(1.0f, 0.0f, 0.0f);
-			glBegin(GL_POINTS);
-			glVertex2f(a->pos[0], a->pos[1]);
-			glEnd();
-			a = a->next;
-		}
-	}
-	//----------------
-	//Draw the bullets
-	Bullet *b = &g.barr[0];
-	for (int i=0; i<g.nbullets; i++) {
-		//Log("draw bullet...\n");
-		glColor3f(1.0, 1.0, 1.0);
-		glBegin(GL_POINTS);
-		glVertex2f(b->pos[0],      b->pos[1]);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]);
-		glVertex2f(b->pos[0],      b->pos[1]-1.0f);
-		glVertex2f(b->pos[0],      b->pos[1]+1.0f);
-		glColor3f(0.8, 0.8, 0.8);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
-		glEnd();
-		++b;
-	}
+
+	if (gl.credits){
+
+		extern void art_credits(int x, int y);
+		extern void edwin_credits(int x, int y);
+		extern void andrew_credits(int x, int y);
+		extern void bryan_credits(int x, int y);
+		extern void joel_credits(int x, int y);
+		art_credits( gl.xres/2,gl.yres/2);
+		edwin_credits(gl.xres/2,((gl.yres/2)+20));
+		andrew_credits(gl.xres/2,((gl.yres/2)+20));
+		bryan_credits(gl.xres/2,((gl.yres/2)+20));
+		joel_credits(gl.xres/2,((gl.yres/2)+20));
+				} else{
+				ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
+				ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
+				ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
+				ggprint8b(&r, 16, 0x00ffff00, "n asteroids destroyed: ");
+				//
+				//-------------
+				//Draw the ship
+				glColor3fv(g.ship.color);
+				glPushMatrix();
+				glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
+				glRotatef(g.ship.angle, 0.0f, 0.0f, 1.0f);
+				glBegin(GL_TRIANGLE_FAN);
+				glVertex2f(-12.0f, -10.0f);
+				glVertex2f(  0.0f, 20.0f);
+				glVertex2f(  0.0f, -6.0f);
+				glVertex2f(  0.0f, -6.0f);
+				glVertex2f(  0.0f, 20.0f);
+				glVertex2f( 12.0f, -10.0f);
+				glEnd();
+				glColor3f(1.0f, 0.0f, 0.0f);
+				glBegin(GL_POINTS);
+				glVertex2f(0.0f, 0.0f);
+				glEnd();
+				glPopMatrix();
+				if (gl.keys[XK_Up] || g.mouseThrustOn) {
+					int i;
+					//draw thrust
+					Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
+					//convert angle to a vector
+					Flt xdir = cos(rad);
+					Flt ydir = sin(rad);
+					Flt xs,ys,xe,ye,r;
+					glBegin(GL_LINES);
+					for (i=0; i<16; i++) {
+						xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
+						ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
+						r = rnd()*40.0+40.0;
+						xe = -xdir * r + rnd() * 18.0 - 9.0;
+						ye = -ydir * r + rnd() * 18.0 - 9.0;
+						glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
+						glVertex2f(g.ship.pos[0]+xs,g.ship.pos[1]+ys);
+						glVertex2f(g.ship.pos[0]+xe,g.ship.pos[1]+ye);
+					}
+					glEnd();
+				}
+				//DrawCircle((float)gl.xres/2,(float)gl.yres/2,44.0,33);
+				//------------------
+				//Draw the asteroids
+				{
+					Asteroid *a = g.ahead;
+					while (a) {
+						//Log("draw asteroid...\n");
+						glColor3fv(a->color);
+						glPushMatrix();
+						glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
+						glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
+						glBegin(GL_LINE_LOOP);
+						//Log("%i verts\n",a->nverts);
+						for (int j=0; j<a->nverts; j++) {
+							glVertex2f(a->vert[j][0], a->vert[j][1]);
+						}
+						glEnd();
+						glPopMatrix();
+						glColor3f(1.0f, 0.0f, 0.0f);
+						glBegin(GL_POINTS);
+						glVertex2f(a->pos[0], a->pos[1]);
+						glEnd();
+						a = a->next;
+					}
+				}
+				//----------------
+				//Draw the bullets
+				Bullet *b = &g.barr[0];
+				for (int i=0; i<g.nbullets; i++) {
+					//Log("draw bullet...\n");
+					glColor3f(1.0, 1.0, 1.0);
+					glBegin(GL_POINTS);
+					glVertex2f(b->pos[0],      b->pos[1]);
+					glVertex2f(b->pos[0]-1.0f, b->pos[1]);
+					glVertex2f(b->pos[0]+1.0f, b->pos[1]);
+					glVertex2f(b->pos[0],      b->pos[1]-1.0f);
+					glVertex2f(b->pos[0],      b->pos[1]+1.0f);
+					glColor3f(0.8, 0.8, 0.8);
+					glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
+					glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
+					glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
+					glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
+					glEnd();
+					++b;
+				}
+				}
 }
