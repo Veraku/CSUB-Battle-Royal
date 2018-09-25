@@ -7,6 +7,7 @@
 
 //Function required for lab 5
 void joel_credits(int x, int y){
+        Rect r;
         r.bot = y;
         r.left = x;
 
