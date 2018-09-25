@@ -754,9 +754,9 @@ void render()
 		extern void joel_credits(int x, int y);
 		art_credits( gl.xres/2,gl.yres/2);
 		edwin_credits(gl.xres/2,((gl.yres/2)+20));
-		andrew_credits(gl.xres/2,((gl.yres/2)+20));
-		bryan_credits(gl.xres/2,((gl.yres/2)+20));
-		joel_credits(gl.xres/2,((gl.yres/2)+20));
+		andrew_credits(gl.xres/2,((gl.yres/2)+40));
+		bryan_credits(gl.xres/2,((gl.yres/2)+60));
+		joel_credits(gl.xres/2,((gl.yres/2)+80));
 				} else{
 				ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
 				ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
